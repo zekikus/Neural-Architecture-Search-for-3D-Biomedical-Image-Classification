@@ -36,17 +36,15 @@ def seed_torch(seed=42):
 
 
 if __name__ == "__main__":
-    modelNo = 74
+    modelNo = 125
 
     path = "results"
     pickle_path = "fracturemnist3d"
     device = torch.device('cuda')
-
-    data_flag = pickle_path.replace("_b", "")
     download = True
 
     BATCH_SIZE = 1
-    info = INFO[data_flag]
+    info = INFO[pickle_path]
     NUM_CLASSES = len(info['label'])
     
     print("#Classes:", NUM_CLASSES)
@@ -62,37 +60,36 @@ if __name__ == "__main__":
     metric_fn = Accuracy(task="multiclass", num_classes=NUM_CLASSES, top_k=1)
 
     txt = ""
-    for seed in [0, 42, 143, 1234, 3074]:
-        start_time = time.time()
-        print("Seed:", seed)
+    
+    start_time = time.time()
 
-        # Load Model
-        model = None
-        with open(f"{path}/{pickle_path}/model_{modelNo}.pkl", "rb") as f:
-            model = GPU_Unpickler(f).load()
+    # Load Model
+    model = None
+    with open(f"{path}/{pickle_path}/model_{modelNo}.pkl", "rb") as f:
+        model = GPU_Unpickler(f).load()
 
-        # Load pre-trained weights
-        print("Model No:", model.solNo, "Seed:", seed)
-        print("Load Model...")
-        model.load_state_dict(torch.load(f"{path}/{pickle_path}/model_{modelNo}_seed_{seed}.pt", map_location=device))
-        model.to(device)
+    # Load pre-trained weights
+    print("Model No:", model.solNo)
+    print("Load Model...")
+    model.load_state_dict(torch.load(f"{path}/{pickle_path}/model_{modelNo}.pt", map_location=device))
+    model.to(device)
 
-        model.eval()
+    model.eval()
 
-        y_score = torch.tensor([]).to(device)
-        with torch.no_grad():
-            for inputs, targets in test_loader:
-                inputs, targets = inputs.to(torch.float32).to(device), targets.to(device, torch.float32)
-                outputs = model(inputs)
-                outputs = outputs.softmax(dim=-1)
-                y_score = torch.cat((y_score, outputs), 0)
+    y_score = torch.tensor([]).to(device)
+    with torch.no_grad():
+        for inputs, targets in test_loader:
+            inputs, targets = inputs.to(torch.float32).to(device), targets.to(device, torch.float32)
+            outputs = model(inputs)
+            outputs = outputs.softmax(dim=-1)
+            y_score = torch.cat((y_score, outputs), 0)
 
-            y_score = y_score.detach().cpu().numpy()
-            
-            evaluator = Evaluator(data_flag, 'test')
-            metrics = evaluator.evaluate(y_score)
+        y_score = y_score.detach().cpu().numpy()
         
-            print('%s  auc: %.4f  acc:%.4f' % ('test', *metrics))
-            txt += '%s  auc: %.4f  acc:%.4f\n' % ('test', *metrics)
+        evaluator = Evaluator(pickle_path, 'test')
+        metrics = evaluator.evaluate(y_score)
+    
+        print('%s  auc: %.4f  acc:%.4f' % ('test', *metrics))
+        txt += '%s  auc: %.4f  acc:%.4f\n' % ('test', *metrics)
         
     write_file(f"{path}/{pickle_path}/model_{modelNo}.txt", txt)
