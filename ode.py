@@ -450,7 +450,7 @@ if __name__ == "__main__":
     device = torch.device('cuda')
 
     random.seed(42)
-    data_flag = 'synapsemnist3d'
+    data_flag = 'organmnist3d'
     download = True
     BATCH_SIZE = 128
     SPLIT_VALUE = 4
