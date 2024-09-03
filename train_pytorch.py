@@ -36,7 +36,7 @@ def seed_torch(seed=42):
 
 path = "results"
 download = True
-data_flag = 'synapsemnist3d'
+data_flag = 'organmnist3d'
 
 info = INFO[data_flag]
 NUM_CLASSES = len(info['label'])
@@ -44,7 +44,7 @@ BATCH_SIZE = 128
 
 DataClass = getattr(medmnist, info['python_class'])
 
-for modelNo in [190, 223, 26]:
+for modelNo in [32, 58, 72]:
     # load the data
     train_dataset = DataClass(split='train', download=download)
     val_dataset = DataClass(split='val', download=download)
